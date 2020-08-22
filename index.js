@@ -12,6 +12,7 @@ dotEnv.config();
 
 //Middleware
 app.use(express.json());
+app.use(cors());
 app.use(function (req, res, next) {
   console.log("incoming req");
   req.header("Access-Control-Allow-Origin", "*");
