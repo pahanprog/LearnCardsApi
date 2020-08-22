@@ -12,18 +12,8 @@ dotEnv.config();
 
 //Middleware
 app.use(express.json());
+app.use(cookieParser());
 app.use(cors());
-app.use(function (req, res, next) {
-  console.log("incoming req");
-  req.header("Access-Control-Allow-Origin", "*");
-  req.header("Access-Control-Allow-Credentials", true);
-  req.header("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,OPTIONS");
-  req.header(
-    "Access-Control-Allow-Headers",
-    "Origin,X-Requested-With,Content-Type,Accept,content-type,application/json,auth-token"
-  );
-  next();
-});
 
 //Connect to db
 try {
