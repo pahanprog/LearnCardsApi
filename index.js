@@ -33,6 +33,6 @@ app.use("/api/user", authRoute);
 app.use("/api/collections", collectionRoute);
 app.use("/api/cards", cardsRoute);
 
-app.listen(3030, () => {
+app.listen(process.env.PORT || 3030, () => {
   console.log("Server running at http::/localhost:3030");
 });
