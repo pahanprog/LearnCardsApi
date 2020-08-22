@@ -4,6 +4,7 @@ const Collection = require("../model/Collection");
 const Card = require("../model/Card");
 
 router.get("/", verify, async (req, res) => {
+  console.log("getting collections");
   const id = req.user._id;
   const collections = await Collection.find({ createdBy: id });
   res.send(collections);
