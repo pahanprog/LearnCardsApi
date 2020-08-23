@@ -4,10 +4,19 @@ const Collection = require("../model/Collection");
 const Card = require("../model/Card");
 
 router.get("/", verify, async (req, res) => {
-  console.log("getting collections");
   const id = req.user._id;
   const collections = await Collection.find({ createdBy: id });
-  res.send(collections);
+  const cards = collections.map(async (collection, index) => {
+    const cards = await Card.find({ parent_collection: collection._id });
+    const obj = { collection, cards };
+    return obj;
+  });
+  try {
+    const cardsNotPromise = await Promise.all(cards);
+    res.send(cardsNotPromise);
+  } catch (err) {
+    console.log(err);
+  }
 });
 
 router.get("/:id", verify, async (req, res) => {
@@ -17,8 +26,10 @@ router.get("/:id", verify, async (req, res) => {
       createdBy: req.user._id,
       _id: id,
     });
-    if (collection) res.send(collection);
-    else
+    if (collection) {
+      const cards = await Card.find({ parent_collection: collection._id });
+      res.send({ collection, cards });
+    } else
       res.status(400).send(
         JSON.stringify({
           message:
@@ -57,7 +68,7 @@ router.post("/", verify, async (req, res) => {
     const savedCollection = await coll.save();
     if (savedCollection) {
       const c_id = savedCollection._id;
-      req.body.questions.map(async (value, index) => {
+      const savedCards = req.body.questions.map(async (value, index) => {
         const card = new Card({
           question: value.question,
           answer: value.answer,
@@ -65,16 +76,18 @@ router.post("/", verify, async (req, res) => {
         });
         try {
           const savedCard = await card.save();
+          return savedCard;
         } catch (err) {
-          res
-            .status(400)
-            .send(JSON.stringify({ message: `question # &{index} error!` }));
+          console.log(err);
+          res.status(400).send({ message: `question error!` });
           return;
         }
       });
+      const cardsNotPromise = await Promise.all(savedCards);
+      res.send({ collection: savedCollection, cards: cardsNotPromise });
     }
-    res.send(savedCollection);
   } catch (err) {
+    console.log(err);
     res.status(400).send(err);
   }
 });
