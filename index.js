@@ -6,6 +6,7 @@ const dotEnv = require("dotenv");
 const authRoute = require("./routes/auth");
 const collectionRoute = require("./routes/collections");
 const cardsRoute = require("./routes/cards");
+const shareRoute = require("./routes/share");
 const app = express();
 
 dotEnv.config();
@@ -32,6 +33,7 @@ try {
 app.use("/api/user", authRoute);
 app.use("/api/collections", collectionRoute);
 app.use("/api/cards", cardsRoute);
+app.use("/api/share", shareRoute);
 
 app.listen(process.env.PORT || 3030, () => {
   console.log("Server running at http::/localhost:3030");
