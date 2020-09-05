@@ -12,7 +12,7 @@ const app = express();
 dotEnv.config();
 
 var corsOptions = {
-  origin: "https://learncard5.herokuapp.com",
+  origin: "http://localhost:3000",
   optionsSuccessStatus: 200,
   credentials: true,
 };
