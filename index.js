@@ -11,10 +11,16 @@ const app = express();
 
 dotEnv.config();
 
+var corsOptions = {
+  origin: "http://localhost:3000",
+  optionsSuccessStatus: 200,
+  credentials: true,
+};
+
 //Middleware
 app.use(express.json());
 app.use(cookieParser());
-app.use(cors());
+app.use(cors(corsOptions));
 
 //Connect to db
 try {

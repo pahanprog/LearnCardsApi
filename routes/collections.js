@@ -2,20 +2,23 @@ const router = require("express").Router();
 const verify = require("./verifytoken");
 const Collection = require("../model/Collection");
 const Card = require("../model/Card");
+const User = require("../model/User");
 
 router.get("/", verify, async (req, res) => {
   const id = req.user._id;
-  const collections = await Collection.find({ createdBy: id });
-  const cards = collections.map(async (collection, index) => {
-    const cards = await Card.find({ parent_collection: collection._id });
-    const obj = { collection, cards };
-    return obj;
-  });
   try {
+    const username = await (await User.findById(id)).toObject().name;
+    const collections = await Collection.find({ createdBy: id });
+    const cards = collections.map(async (collection, index) => {
+      const cards = await Card.find({ parent_collection: collection._id });
+      const obj = { collection, cards };
+      return obj;
+    });
     const cardsNotPromise = await Promise.all(cards);
-    res.send(cardsNotPromise);
+    res.send({ collections: cardsNotPromise, username });
   } catch (err) {
     console.log(err);
+    res.status(400).send(err);
   }
 });
 
@@ -50,25 +53,26 @@ router.post("/", verify, async (req, res) => {
 
   //Check if collection with this title and creater exists
   const titleExists = await Collection.findOne({
-    title: req.body.title,
+    title: req.body.data.title,
     createdBy: id,
   });
-  if (titleExists)
+  if (titleExists) {
     return res
       .status(400)
       .send(JSON.stringify({ message: "Title should be unique" }));
+  }
 
   //Save new collection
   const coll = new Collection({
-    title: req.body.title,
-    description: req.body.description,
+    title: req.body.data.title,
+    description: req.body.data.description,
     createdBy: id,
   });
   try {
     const savedCollection = await coll.save();
     if (savedCollection) {
       const c_id = savedCollection._id;
-      const savedCards = req.body.questions.map(async (value, index) => {
+      const savedCards = req.body.data.questions.map(async (value, index) => {
         const card = new Card({
           question: value.question,
           answer: value.answer,
@@ -95,10 +99,10 @@ router.post("/", verify, async (req, res) => {
 router.post("/delete", verify, async (req, res) => {
   try {
     const deletedCollection = await Collection.findByIdAndDelete(
-      req.body.collectionId
+      req.body.data.collectionId
     );
     const deletedCards = await Card.find({
-      parent_collection: req.body.collectionId,
+      parent_collection: req.body.data.collectionId,
     });
     deletedCards.map(async (value, index) => {
       const deletedCard = await Card.find({
@@ -112,9 +116,9 @@ router.post("/delete", verify, async (req, res) => {
 });
 
 router.post("/update/info", verify, async (req, res) => {
-  const collection = await Collection.findById(req.body._id);
-  collection.title = req.body.title;
-  collection.description = req.body.description;
+  const collection = await Collection.findById(req.body.data._id);
+  collection.title = req.body.data.title;
+  collection.description = req.body.data.description;
   try {
     const EditedCollection = await collection.save();
     res.send(EditedCollection);
@@ -127,7 +131,7 @@ router.post("/update/info", verify, async (req, res) => {
 
 router.post("/update/cards", verify, async (req, res) => {
   var savedCards = [];
-  req.body.questions.map(async (value, index) => {
+  req.body.data.questions.map(async (value, index) => {
     if (value._id) {
       const card = await Card.findById(value._id);
       card.question = value.question;
@@ -143,7 +147,7 @@ router.post("/update/cards", verify, async (req, res) => {
       const card = new Card({
         question: value.question,
         answer: value.answer,
-        parent_collection: req.body._id,
+        parent_collection: req.body.data._id,
       });
       try {
         const savedCard = await card.save();
@@ -158,7 +162,7 @@ router.post("/update/cards", verify, async (req, res) => {
     }
   });
   const deletedCards = [];
-  req.body.delete.map(async (value, index) => {
+  req.body.data.delete.map(async (value, index) => {
     try {
       const deletedCard = await Card.findByIdAndDelete(value._id);
       deletedCards.push(deletedCard);
