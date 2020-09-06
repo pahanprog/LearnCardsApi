@@ -18,6 +18,9 @@ router.post("/register", async (req, res) => {
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(req.body.data.password, salt);
 
+  //check if user wants to remember
+  const remember = req.body.data.remember;
+
   const user = new User({
     name: req.body.data.name,
     email: req.body.data.email,
@@ -26,7 +29,33 @@ router.post("/register", async (req, res) => {
   try {
     const savedUser = await user.save();
     const token = jwt.sign({ _id: savedUser._id }, process.env.TOKEN_SECRET);
-    res.header("token", token).send(token);
+    if (remember) {
+      var hour = 3600000;
+      res.cookie("token", token, {
+        maxAge: 14 * 24 * hour,
+        httpOnly: true,
+        secure: true,
+        sameSite: "none",
+      });
+      res.cookie("username", req.body.data.name, {
+        maxAge: 14 * 24 * hour,
+        httpOnly: false,
+        secure: true,
+        sameSite: "none",
+      });
+    } else {
+      res.cookie("token", token, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "none",
+      }).expires = false;
+      res.cookie("username", req.body.data.name, {
+        httpOnly: false,
+        secure: true,
+        sameSite: "none",
+      }).expires = false;
+    }
+    res.send("");
   } catch (err) {
     res.status(400).send(err);
   }
@@ -46,14 +75,45 @@ router.post("/login", async (req, res) => {
   const validPass = await bcrypt.compare(req.body.data.password, user.password);
   if (!validPass) return res.status(400).send("Invalid password");
 
+  //check if user wants to remember
+  const remember = req.body.data.remember;
+
   //Loged in!
   const token = jwt.sign({ _id: user._id }, process.env.TOKEN_SECRET);
-  res.cookie("token", token, {
-    maxAge: 900000,
-    httpOnly: true,
-    secure: true,
-    sameSite: "none",
-  });
+  const username = user.name;
+  if (remember) {
+    var hour = 3600000;
+    res.cookie("token", token, {
+      maxAge: 14 * 24 * hour,
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+    });
+    res.cookie("username", username, {
+      maxAge: 14 * 24 * hour,
+      httpOnly: false,
+      secure: true,
+      sameSite: "none",
+    });
+  } else {
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+    }).expires = false;
+    res.cookie("username", username, {
+      httpOnly: false,
+      secure: true,
+      sameSite: "none",
+    }).expires = false;
+  }
+  res.send("");
+});
+
+//LOGOUT
+router.get("/signout", async (req, res) => {
+  res.clearCookie("username");
+  res.clearCookie("token");
   res.send("");
 });
 

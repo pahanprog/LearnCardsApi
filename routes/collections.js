@@ -7,7 +7,6 @@ const User = require("../model/User");
 router.get("/", verify, async (req, res) => {
   const id = req.user._id;
   try {
-    const username = await (await User.findById(id)).toObject().name;
     const collections = await Collection.find({ createdBy: id });
     const cards = collections.map(async (collection, index) => {
       const cards = await Card.find({ parent_collection: collection._id });
@@ -15,7 +14,7 @@ router.get("/", verify, async (req, res) => {
       return obj;
     });
     const cardsNotPromise = await Promise.all(cards);
-    res.send({ collections: cardsNotPromise, username });
+    res.send({ collections: cardsNotPromise });
   } catch (err) {
     console.log(err);
     res.status(400).send(err);
