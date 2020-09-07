@@ -112,8 +112,8 @@ router.post("/login", async (req, res) => {
 
 //LOGOUT
 router.get("/signout", async (req, res) => {
-  res.clearCookie("username");
-  res.clearCookie("token");
+  res.clearCookie("username", { secure: true, sameSite: "none" });
+  res.clearCookie("token", { secure: true, sameSite: "none" });
   res.send("");
 });
 
