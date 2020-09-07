@@ -92,7 +92,8 @@ router.post("/login", async (req, res) => {
     res.cookie("username", username, {
       maxAge: 14 * 24 * hour,
       httpOnly: false,
-      secure: false,
+      secure: true,
+      sameSite: "none",
     });
   } else {
     res.cookie("token", token, {
@@ -102,7 +103,8 @@ router.post("/login", async (req, res) => {
     }).expires = false;
     res.cookie("username", username, {
       httpOnly: false,
-      secure: false,
+      secure: true,
+      sameSite: "none",
     }).expires = false;
   }
   res.send("");
